@@ -1,0 +1,65 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}게시글 목록 - Redis Board{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>게시글 목록</h1>
+        <a href="/posts/create" class="btn btn-primary">새 글 작성</a>
+    </div>
+
+    {% if posts is empty %}
+        <div class="alert alert-info">
+            <h4>게시글이 없습니다.</h4>
+            <p>첫 번째 게시글을 작성해보세요!</p>
+            <a href="/posts/create" class="btn btn-primary">글 작성하기</a>
+        </div>
+    {% else %}
+        <div class="row">
+            {% for post in posts %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a href="/posts/{{ post.id }}" class="text-decoration-none">
+                                    {{ post.title }}
+                                </a>
+                            </h5>
+                            <p class="card-text">
+                                {{ post.content|length > 100 ? post.content|slice(0, 100) ~ '...' : post.content }}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">by {{ post.author }}</small>
+                                <small class="text-muted">{{ post.created_at }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if pagination.pages > 1 %}
+            <nav aria-label="게시글 페이지네이션">
+                <ul class="pagination justify-content-center">
+                    {% if pagination.page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ pagination.page - 1 }}">이전</a>
+                        </li>
+                    {% endif %}
+
+                    {% for page in 1..pagination.pages %}
+                        <li class="page-item {{ page == pagination.page ? 'active' : '' }}">
+                            <a class="page-link" href="?page={{ page }}">{{ page }}</a>
+                        </li>
+                    {% endfor %}
+
+                    {% if pagination.page < pagination.pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ pagination.page + 1 }}">다음</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% endif %}
+{% endblock %}

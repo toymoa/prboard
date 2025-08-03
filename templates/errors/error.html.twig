@@ -1,0 +1,12 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}{{ status_code }} {{ title }} - Redis Board{% endblock %}
+
+{% block content %}
+    <div class="text-center">
+        <h1 class="display-1">{{ status_code }}</h1>
+        <h2 class="mb-3">{{ title }}</h2>
+        <p class="lead">{{ message }}</p>
+        <a href="/" class="btn btn-primary">홈으로 돌아가기</a>
+    </div>
+{% endblock %}
