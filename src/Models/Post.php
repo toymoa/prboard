@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Predis\Client as RedisClient;
+use Redis;
 
 /**
  * Post model for managing bulletin board posts in Redis.
@@ -15,7 +15,7 @@ final class Post
     private const LIST_KEY = 'posts';
 
     public function __construct(
-        private readonly RedisClient $redis,
+        private readonly Redis $redis,
     ) {}
 
     /**
@@ -38,10 +38,10 @@ final class Post
         ];
 
         // 게시글 데이터 저장
-        $this->redis->hmset(self::KEY_PREFIX . $id, $post);
+        $this->redis->hMSet(self::KEY_PREFIX . $id, $post);
 
         // 게시글 목록에 추가 (최신순)
-        $this->redis->lpush(self::LIST_KEY, $id);
+        $this->redis->lPush(self::LIST_KEY, $id);
 
         return $id;
     }
@@ -54,7 +54,7 @@ final class Post
     public function findById(string $id): ?array
     {
         /** @var array<string, mixed> $post */
-        $post = $this->redis->hgetall(self::KEY_PREFIX . $id);
+        $post = $this->redis->hGetAll(self::KEY_PREFIX . $id);
 
         if (empty($post)) {
             return null;
@@ -87,7 +87,7 @@ final class Post
 
         $offset = ($page - 1) * $limit;
         /** @var list<string> $postIds */
-        $postIds = $this->redis->lrange(self::LIST_KEY, $offset, $offset + $limit - 1);
+        $postIds = $this->redis->lRange(self::LIST_KEY, $offset, $offset + $limit - 1);
 
         $posts = [];
         foreach ($postIds as $id) {
@@ -116,7 +116,7 @@ final class Post
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
-        $this->redis->hmset(self::KEY_PREFIX . $id, $updatedPost);
+        $this->redis->hMSet(self::KEY_PREFIX . $id, $updatedPost);
 
         return true;
     }
@@ -135,7 +135,7 @@ final class Post
         $this->redis->del(self::KEY_PREFIX . $id);
 
         // 게시글 목록에서 제거
-        $this->redis->lrem(self::LIST_KEY, 0, $id);
+        $this->redis->lRem(self::LIST_KEY, $id, 0);
 
         return true;
     }
@@ -145,7 +145,7 @@ final class Post
      */
     public function getTotal(): int
     {
-        return $this->redis->llen(self::LIST_KEY);
+        return $this->redis->lLen(self::LIST_KEY);
     }
 
     /**

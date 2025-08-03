@@ -26,7 +26,7 @@ return [
         'twig' => [
             'template_path' => __DIR__ . '/../templates',
             'twig' => [
-                'cache' => $_ENV['APP_ENV'] === 'production' ? __DIR__ . '/../var/cache/twig' : false,
+                'cache' => $_ENV['APP_ENV'] === 'production' ? __DIR__ . '/../cache/twig' : false,
                 'debug' => $_ENV['APP_DEBUG'] === 'true',
                 'auto_reload' => $_ENV['APP_ENV'] === 'development',
             ],

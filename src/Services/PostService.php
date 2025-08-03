@@ -106,7 +106,7 @@ final class PostService
      *
      * @param array<string, mixed> $data
      *
-     * @return array{title?: string, content?: string, author?: string}
+     * @return array{title: string, content: string, author?: string}
      *
      * @throws \InvalidArgumentException
      */
@@ -155,6 +155,17 @@ final class PostService
             }
         }
 
+        // Ensure required fields are present when required
+        if ($required) {
+            if (!isset($validated['title'])) {
+                throw new \InvalidArgumentException('Title is required');
+            }
+            if (!isset($validated['content'])) {
+                throw new \InvalidArgumentException('Content is required');
+            }
+        }
+
+        /** @var array{title: string, content: string, author?: string} */
         return $validated;
     }
 }

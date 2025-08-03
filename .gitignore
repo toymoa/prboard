@@ -7,16 +7,10 @@ composer.lock
 .env.local
 .env.*.local
 
-# Logs
+# Cache
+/cache/
 /logs/
 *.log
-
-# Cache
-/var/cache/
-/var/logs/
-/var/sessions/
-/tmp/
-/cache/
 
 # IDE files
 .vscode/
@@ -70,6 +64,10 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json
+
+# Built CSS
+/public/css/style.css
 
 # Webpack/Build tools (if using)
 /dist/

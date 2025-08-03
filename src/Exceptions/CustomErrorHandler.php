@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Exceptions;
 
+use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Handlers\ErrorHandler;
+use Slim\Interfaces\CallableResolverInterface;
 use Slim\Views\Twig;
 use Throwable;
 
@@ -17,10 +19,17 @@ use Throwable;
  */
 final class CustomErrorHandler extends ErrorHandler
 {
+    private Twig $twig;
+
     public function __construct(
-        private readonly Twig $twig,
-        private readonly LoggerInterface $logger,
-    ) {}
+        Twig $twig,
+        CallableResolverInterface $callableResolver,
+        ResponseFactoryInterface $responseFactory,
+        ?LoggerInterface $logger = null,
+    ) {
+        parent::__construct($callableResolver, $responseFactory, $logger);
+        $this->twig = $twig;
+    }
 
     protected function respond(): Response
     {

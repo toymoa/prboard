@@ -21,9 +21,10 @@ final class MethodOverrideMiddleware implements MiddlewareInterface
         if (
             $request->getMethod() === 'POST' &&
             is_array($parsedBody) &&
-            isset($parsedBody['_METHOD'])
+            isset($parsedBody['_METHOD']) &&
+            is_string($parsedBody['_METHOD'])
         ) {
-            $method = strtoupper((string) $parsedBody['_METHOD']);
+            $method = strtoupper($parsedBody['_METHOD']);
             if (in_array($method, ['PUT', 'PATCH', 'DELETE'], true)) {
                 $request = $request->withMethod($method);
             }

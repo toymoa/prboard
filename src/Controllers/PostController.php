@@ -28,8 +28,16 @@ final class PostController
     {
         try {
             $queryParams = $request->getQueryParams();
-            $page = (int) ($queryParams['page'] ?? 1);
-            $limit = (int) ($queryParams['limit'] ?? 10);
+            $page = 1;
+            $limit = 10;
+
+            if (isset($queryParams['page']) && is_numeric($queryParams['page'])) {
+                $page = (int) $queryParams['page'];
+            }
+
+            if (isset($queryParams['limit']) && is_numeric($queryParams['limit'])) {
+                $limit = (int) $queryParams['limit'];
+            }
 
             $data = $this->postService->getAllPosts($page, $limit);
 
@@ -43,12 +51,13 @@ final class PostController
 
     /**
      * Display single post.
+     *
+     * @param array{id: string} $args
      */
     public function show(Request $request, Response $response, array $args): Response
     {
         try {
-            /** @var string $id */
-            $id = $args['id'] ?? '';
+            $id = $args['id'];
 
             $post = $this->postService->getPost($id);
             if ($post === null) {
@@ -57,12 +66,11 @@ final class PostController
 
             return $this->twig->render($response, 'posts/show.html.twig', ['post' => $post]);
         } catch (\Throwable $e) {
-            $this->logger->error('Error fetching post', ['id' => $args['id'] ?? '', 'exception' => $e]);
+            $this->logger->error('Error fetching post', ['id' => $args['id'], 'exception' => $e]);
 
             return $response->withStatus(500);
         }
     }
-
     /**
      * Show create post form.
      */
@@ -80,7 +88,22 @@ final class PostController
             /** @var array<string, mixed> $data */
             $data = $request->getParsedBody() ?? [];
 
-            $post = $this->postService->createPost($data);
+            // Validate required fields
+            if (!isset($data['title'], $data['content'])) {
+                return $response->withStatus(400);
+            }
+
+            /** @var array{title: string, content: string, author?: string} $validatedData */
+            $validatedData = [
+                'title' => (string) $data['title'],
+                'content' => (string) $data['content'],
+            ];
+
+            if (isset($data['author'])) {
+                $validatedData['author'] = (string) $data['author'];
+            }
+
+            $post = $this->postService->createPost($validatedData);
 
             return $response
                 ->withHeader('Location', '/posts/' . $post['id'])
@@ -101,12 +124,13 @@ final class PostController
 
     /**
      * Show edit post form.
+     *
+     * @param array{id: string} $args
      */
     public function edit(Request $request, Response $response, array $args): Response
     {
         try {
-            /** @var string $id */
-            $id = $args['id'] ?? '';
+            $id = $args['id'];
 
             $post = $this->postService->getPost($id);
             if ($post === null) {
@@ -115,20 +139,20 @@ final class PostController
 
             return $this->twig->render($response, 'posts/edit.html.twig', ['post' => $post]);
         } catch (\Throwable $e) {
-            $this->logger->error('Error fetching post for edit', ['id' => $args['id'] ?? '', 'exception' => $e]);
+            $this->logger->error('Error fetching post for edit', ['id' => $args['id'], 'exception' => $e]);
 
             return $response->withStatus(500);
         }
     }
-
     /**
      * Update post.
+     *
+     * @param array{id: string} $args
      */
     public function update(Request $request, Response $response, array $args): Response
     {
         try {
-            /** @var string $id */
-            $id = $args['id'] ?? '';
+            $id = $args['id'];
             /** @var array<string, mixed> $data */
             $data = $request->getParsedBody() ?? [];
 
@@ -141,9 +165,9 @@ final class PostController
                 ->withHeader('Location', '/posts/' . $post['id'])
                 ->withStatus(302);
         } catch (\InvalidArgumentException $e) {
-            $this->logger->warning('Validation error updating post', ['id' => $args['id'] ?? '', 'error' => $e->getMessage()]);
+            $this->logger->warning('Validation error updating post', ['id' => $args['id'], 'error' => $e->getMessage()]);
 
-            $post = $this->postService->getPost($args['id'] ?? '');
+            $post = $this->postService->getPost($args['id']);
             if ($post === null) {
                 return $response->withStatus(404);
             }
@@ -154,20 +178,20 @@ final class PostController
                 'old' => $request->getParsedBody(),
             ]);
         } catch (\Throwable $e) {
-            $this->logger->error('Error updating post', ['id' => $args['id'] ?? '', 'exception' => $e]);
+            $this->logger->error('Error updating post', ['id' => $args['id'], 'exception' => $e]);
 
             return $response->withStatus(500);
         }
     }
-
     /**
      * Delete post.
+     *
+     * @param array{id: string} $args
      */
     public function destroy(Request $request, Response $response, array $args): Response
     {
         try {
-            /** @var string $id */
-            $id = $args['id'] ?? '';
+            $id = $args['id'];
 
             if (!$this->postService->deletePost($id)) {
                 return $response->withStatus(404);
@@ -177,7 +201,7 @@ final class PostController
                 ->withHeader('Location', '/')
                 ->withStatus(302);
         } catch (\Throwable $e) {
-            $this->logger->error('Error deleting post', ['id' => $args['id'] ?? '', 'exception' => $e]);
+            $this->logger->error('Error deleting post', ['id' => $args['id'], 'exception' => $e]);
 
             return $response->withStatus(500);
         }

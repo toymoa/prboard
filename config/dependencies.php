@@ -9,9 +9,9 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Logger;
 use Monolog\Processor\UidProcessor;
-use Predis\Client as RedisClient;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Redis;
 use Slim\Views\Twig;
 
 return static function (ContainerBuilder $containerBuilder): void {
@@ -32,18 +32,21 @@ return static function (ContainerBuilder $containerBuilder): void {
             return $logger;
         },
 
-        RedisClient::class => static function (ContainerInterface $c): RedisClient {
+        Redis::class => static function (ContainerInterface $c): Redis {
             /** @var array{settings: array{redis: array{host: string, port: int, password: string, database: int}}} $settings */
             $settings = $c->get('settings');
             $redisSettings = $settings['settings']['redis'];
 
-            return new RedisClient([
-                'scheme' => 'tcp',
-                'host' => $redisSettings['host'],
-                'port' => $redisSettings['port'],
-                'password' => $redisSettings['password'] !== '' ? $redisSettings['password'] : null,
-                'database' => $redisSettings['database'],
-            ]);
+            $redis = new Redis();
+            $redis->connect($redisSettings['host'], $redisSettings['port']);
+
+            if ($redisSettings['password'] !== '') {
+                $redis->auth($redisSettings['password']);
+            }
+
+            $redis->select($redisSettings['database']);
+
+            return $redis;
         },
 
         Twig::class => static function (ContainerInterface $c): Twig {
@@ -55,8 +58,8 @@ return static function (ContainerBuilder $containerBuilder): void {
         },
 
         Post::class => static function (ContainerInterface $c): Post {
-            /** @var RedisClient $redis */
-            $redis = $c->get(RedisClient::class);
+            /** @var Redis $redis */
+            $redis = $c->get(Redis::class);
 
             return new Post($redis);
         },
